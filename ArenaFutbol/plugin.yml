@@ -3,8 +3,7 @@ main: me.morrango.arenafutbol.ArenaFutbol
 version: 0.1
 website: http://
 author: Morrango
-depends: [BattleArena, BattleTracker]
-softdepends: BattleTracker
+depend: [BattleArena]
 
 description: >
              version 2 of futbol
@@ -14,4 +13,3 @@ commands:
     aliases: [fb]
     usage: |
            /fb           
-

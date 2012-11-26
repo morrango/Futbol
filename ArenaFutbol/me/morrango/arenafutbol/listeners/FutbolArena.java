@@ -59,6 +59,7 @@ public class FutbolArena extends Arena{
 
 	public FutbolArena(){}	
 	
+	
 	@MatchEventHandler
 	public void matchMessages(MatchMessageEvent event){
 		MatchState state = event.getState();

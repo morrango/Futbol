@@ -12,19 +12,19 @@ Futbol:
     ### You can delete any stages/transitions that have no options
     ### for a list of options see wiki
     preReqs: ## Prerequisites for joining
-        options: [clearInventory]
-    onJoin:  ## when they join the match
         options: []
+    onJoin:  ## when they join the match
+        options: [clearInventory]
     onPreStart: ## x seconds before onStart
         options: []
     onStart: ## Starting
-        options: [teleportIn, pvpOff, woolteams]
+        options: [teleportIn, pvpOff, woolTeams, blockBreakOff]
     onSpawn: ## what happens when a player spawns
         options: [hunger=20, health=20]
     onDeath: ## what happens when a player dies
         options: []
     onComplete: ## what happens when things end
-        options: [teleportOut, pvpOn, clearInventory]
+        options: [teleportOut, pvpOn, clearInventory, blockBreakOn]
     winner: ## what to give the winner
         options: [health=20, hunger=20]
     losers: ## what to give the losers
