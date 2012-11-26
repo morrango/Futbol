@@ -1,0 +1,17 @@
+name: ArenaFutbol
+main: me.morrango.arenafutbol.ArenaFutbol
+version: 0.1
+website: http://
+author: Morrango
+depends: [BattleArena, BattleTracker]
+softdepends: BattleTracker
+
+description: >
+             version 2 of futbol
+commands:
+  futbol:
+    description: arena futbol
+    aliases: [fb]
+    usage: |
+           /fb           
+
