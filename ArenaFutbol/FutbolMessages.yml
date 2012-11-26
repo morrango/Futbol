@@ -1,0 +1,28 @@
+version: 1.2
+### Uncomment the sections you want to customize
+
+#common:
+#    team: '&7{name}&e'
+#    teamshort: '&7{name}&e[{ranking}]'
+#    teamlong: '&7{name}&e[{ranking}] &6({wins}:{losses})'
+#    other_team_not_ready: '&eThe other &cteams&e were not ready and forfeited'
+#    your_team_not_ready: '&eYour team was not ready to join'
+#
+match:    
+    twoTeams: ## 1 team vs another team
+        prestart: '&eYour {matchname}&e match against {otherteam}&e starts in {time}.'
+        server_prestart: '&6{matchprefix} {teamshort1}&6 vs {teamshort2}&6!'
+        start: '&4********** &eFutbol!!!! &4**********'
+        server_start: "debug"
+        victory: |
+            &eYou have won your {matchname} match against {otherteam}
+            &eTotal Win/Loss: &e({wins}:{losses})
+            &eRecord against {otherteam}: &e({winsagainst}:{lossesagainst})
+        loss: |
+            &eYou have lost your {matchname} match against {otherteam}
+            &eTotal Win/Loss: &e({wins}:{losses})
+            &eRecord against {otherteam}: &e({winsagainst}:{lossesagainst})
+        draw: "&eThe {matchname}&e has ended in a draw"
+        server_victory: '{winnerlong}&e defeated {loserlong}!'
+        server_draw: '{teamlong1}&e drew {teamlong2}!'
+
