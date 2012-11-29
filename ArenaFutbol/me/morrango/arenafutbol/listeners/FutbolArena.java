@@ -24,11 +24,13 @@
 package me.morrango.arenafutbol.listeners;
 
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import mc.alk.arena.BattleArena;
+import mc.alk.arena.competition.match.Match;
 import mc.alk.arena.events.matches.MatchMessageEvent;
 import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.MatchState;
@@ -57,7 +59,9 @@ public class FutbolArena extends Arena{
 	@SuppressWarnings("unused")
 	private ArenaFutbol plugin;
 
-	public FutbolArena(){}	
+	public FutbolArena(){}
+	public HashMap<Entity, Player> kickedBy = new HashMap<Entity, Player>();
+	public HashMap<Entity, Match> balls = new HashMap<Entity, Match>();
 	
 	
 	@MatchEventHandler
@@ -70,7 +74,7 @@ public class FutbolArena extends Arena{
 				ChatColor.GRAY + teamTwo.getName() + ": " + ChatColor.GOLD + teamTwo.getNKills());
 		if (state.equals(MatchState.ONMATCHINTERVAL)) {
 			event.setMatchMessage("");
-			match.sendMessage(ChatColor.YELLOW + "The score is " + score);
+			match.sendMessage(ChatColor.YELLOW + "The current score is " + score);
 		}
 		if (state.equals(MatchState.ONMATCHTIMEEXPIRED)) {
 			event.setMatchMessage("");
@@ -80,6 +84,7 @@ public class FutbolArena extends Arena{
 	
 	@MatchEventHandler
 	public void onPlayerAnimation(PlayerAnimationEvent event){
+		Match match = getMatch();
 		Player player = event.getPlayer();
 		Location location = player.getLocation();
 		World world = player.getWorld();
@@ -91,13 +96,19 @@ public class FutbolArena extends Arena{
 				Vector adjustedVector = direction.setY(y + 0.25);
 				entity.setVelocity(adjustedVector);
 				world.playEffect(location, Effect.STEP_SOUND, 10);
+				kickedBy.put(entity, player);
+				balls.put(entity, match);
 			}
 		}
 	}
 
 	@MatchEventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent event){
-		event.setCancelled(true);
+		if (event.isCancelled()) {
+			return;
+		}else {
+			event.setCancelled(true);
+		}
 	}
 	
 	@MatchEventHandler(needsPlayer=false)
@@ -109,27 +120,27 @@ public class FutbolArena extends Arena{
 		Block block = loc.getBlock().getRelative(BlockFace.DOWN);
 		int blockData = block.getData();
 		if (ent instanceof Item) {
-			Map<Integer, Location> spawnLocs = match.getArena().getSpawnLocs();
-			List<Team> teamsList = match.getArena().getTeams();
+			Match thisMatch = balls.get(ent);
+			Player kickedByPlayer = kickedBy.get(ent);
+			Map<Integer, Location> spawnLocs = thisMatch.getArena().getSpawnLocs();
+			List<Team> teamsList = thisMatch.getArena().getTeams();
 			Team teamOne = teamsList.get(0);
 			Team teamTwo = teamsList.get(1);
+			ArenaPlayer scoringPlayer = BattleArena.toArenaPlayer(kickedByPlayer);
+			// Add kill and send message
+			teamsList.get(blockData).addKill(scoringPlayer);
+			world.createExplosion(loc, -1); // TODO maybe change to a sound and effect. Also add to config.yml
+			thisMatch.sendMessage(ChatColor.GRAY + scoringPlayer.getName() + ChatColor.YELLOW + " has scored a Goal!!! "); 
+			thisMatch.sendMessage(ChatColor.GRAY + teamOne.getName() + ": " + ChatColor.GOLD + teamOne.getNKills() + " " +
+				ChatColor.GRAY + teamTwo.getName() + ": " + ChatColor.GOLD + teamTwo.getNKills());
+			// Send ball to center
+			Vector stop = new Vector(0, 0, 0);
+			ent.setVelocity(stop);
+			ent.teleport(spawnLocs.get(2), TeleportCause.PLUGIN);
+			ent.setVelocity(stop);
+			// Return players to team spawn
 			Set<Player> setOne = teamOne.getBukkitPlayers();
 			Set<Player> setTwo = teamTwo.getBukkitPlayers();
-		 	// Get a player from a team and set to ArenaPlayer
-			Player teamPlayer = null;
-			if (blockData == 0) {teamPlayer = setOne.iterator().next();}
-			if (blockData == 1) {teamPlayer = setTwo.iterator().next();}
-			ArenaPlayer arenaPlayer = BattleArena.toArenaPlayer(teamPlayer);
-			// Add kill and send message
-			teamsList.get(blockData).addKill(arenaPlayer);
-			world.createExplosion(loc, -1); 
-			match.sendMessage(ChatColor.YELLOW + "Goal!!! " + 
-					ChatColor.GRAY + teamOne.getName() + ": " + ChatColor.GOLD + teamOne.getNKills() + " " +
-					ChatColor.GRAY + teamTwo.getName() + ": " + ChatColor.GOLD + teamTwo.getNKills());
-			// Send ball to opposing team
-			if (blockData == 1) {ent.teleport(spawnLocs.get(0), TeleportCause.PLUGIN);}
-			if (blockData == 0) {ent.teleport(spawnLocs.get(1), TeleportCause.PLUGIN);}
-			// Return players to team spawn
 			for (Player player : setOne) {player.teleport(match.getArena().getSpawnLoc(0));}
 			for (Player player : setTwo) {player.teleport(match.getArena().getSpawnLoc(1));}
 		}
