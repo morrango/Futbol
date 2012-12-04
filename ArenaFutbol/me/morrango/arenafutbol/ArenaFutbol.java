@@ -27,8 +27,8 @@ package me.morrango.arenafutbol;
 import java.util.logging.Logger;
 
 import mc.alk.arena.BattleArena;
+import me.morrango.arenafutbol.commands.CommandExecutor_ArenaFutbol;
 import me.morrango.arenafutbol.listeners.FutbolArena;
-
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -37,17 +37,16 @@ public class ArenaFutbol extends JavaPlugin{
 	private Logger log;
 	private PluginDescriptionFile description;
 	private String prefix;
-
 	
 	@Override
 	public void onEnable(){
 		log = Logger.getLogger("Minecraft");
 		description = getDescription();
 		prefix = "["+description.getName()+"] ";
-
 		log("loading "+description.getFullName());
-		
+		saveDefaultConfig();
 		BattleArena.registerMatchType(this, "Futbol", "fb", FutbolArena.class);
+		getCommand("arenafutbol").setExecutor(new CommandExecutor_ArenaFutbol(this));
 	}
 	
 	@Override
@@ -58,6 +57,5 @@ public class ArenaFutbol extends JavaPlugin{
 	public void log(String message){
 		log.info(prefix+message);
 	}
-
 
 }

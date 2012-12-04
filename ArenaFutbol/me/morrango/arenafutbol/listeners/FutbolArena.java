@@ -25,6 +25,7 @@ package me.morrango.arenafutbol.listeners;
 
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,12 +34,13 @@ import mc.alk.arena.BattleArena;
 import mc.alk.arena.competition.match.Match;
 import mc.alk.arena.events.matches.MatchMessageEvent;
 import mc.alk.arena.objects.ArenaPlayer;
+import mc.alk.arena.objects.MatchResult;
 import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.MatchEventHandler;
 import mc.alk.arena.objects.teams.Team;
-import me.morrango.arenafutbol.ArenaFutbol;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -52,17 +54,44 @@ import org.bukkit.event.entity.EntityInteractEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
 
 public class FutbolArena extends Arena{
-	@SuppressWarnings("unused")
-	private ArenaFutbol plugin;
-
 	public FutbolArena(){}
+	public Plugin plugin = Bukkit.getPluginManager().getPlugin("ArenaFutbol");
 	public HashMap<Entity, Player> kickedBy = new HashMap<Entity, Player>();
-	public HashMap<Entity, Match> balls = new HashMap<Entity, Match>();
+	public HashMap<Entity, Match> kickedBalls = new HashMap<Entity, Match>();
+	public HashMap<Match, Entity> cleanUpList = new HashMap<Match, Entity>();
+	public Set<Team> canKick = new HashSet<Team>();
 	
+	@Override
+	public void onStart(){
+		Location loc = getSpawnLoc(2);
+		World world = loc.getWorld();
+		int ball = plugin.getConfig().getInt("ball");
+		ItemStack is = new ItemStack(ball);
+		Location center = fixCenter(world, loc);
+		world.dropItem(center, is);
+		List<Team> teamsList = match.getArena().getTeams();
+		for (Team t: teamsList) {
+			canKick.add(t);
+		}
+	}
+	
+	@Override
+	public void onVictory(MatchResult result){
+		removeBalls(getMatch());
+		removeTeams(getMatch());
+	}
+	
+	@Override
+	public void onCancel(){
+		removeBalls(getMatch());
+		removeTeams(getMatch());
+	}
 	
 	@MatchEventHandler
 	public void matchMessages(MatchMessageEvent event){
@@ -70,34 +99,40 @@ public class FutbolArena extends Arena{
 		List<Team> teamsList = match.getArena().getTeams();
 		Team teamOne = teamsList.get(0);
 		Team teamTwo = teamsList.get(1);
-		String score = (ChatColor.GRAY + teamOne.getName() + ": " + ChatColor.GOLD + teamOne.getNKills() + " " +
-				ChatColor.GRAY + teamTwo.getName() + ": " + ChatColor.GOLD + teamTwo.getNKills());
 		if (state.equals(MatchState.ONMATCHINTERVAL)) {
 			event.setMatchMessage("");
-			match.sendMessage(ChatColor.YELLOW + "The current score is " + score);
+			match.sendMessage(ChatColor.YELLOW + "The current score is " +
+					scoreMessage(teamOne, teamTwo));
 		}
 		if (state.equals(MatchState.ONMATCHTIMEEXPIRED)) {
 			event.setMatchMessage("");
-			match.sendMessage(ChatColor.YELLOW + "The Final score is " + score);	
+			match.sendMessage(ChatColor.YELLOW + "The Final score is " +
+					scoreMessage(teamOne, teamTwo));	
 		}
 	}
 	
 	@MatchEventHandler
 	public void onPlayerAnimation(PlayerAnimationEvent event){
-		Match match = getMatch();
 		Player player = event.getPlayer();
-		Location location = player.getLocation();
-		World world = player.getWorld();
+		ArenaPlayer arenaPlayer = getAP(event.getPlayer());
+		Team kickersTeam = getTeam(arenaPlayer);
 		List<Entity> ent = player.getNearbyEntities(1,1,1);
 		for (Entity entity : ent) {
-			if(entity instanceof Item) {
+			if(entity instanceof Item && canKick.contains(kickersTeam)) {
+				List<Team> teamsList = match.getArena().getTeams();
+				Location location = player.getLocation();
+				World world = player.getWorld();
 				Vector direction = player.getEyeLocation().getDirection();
-				double y = direction.getY();
-				Vector adjustedVector = direction.setY(y + 0.25);
-				entity.setVelocity(adjustedVector);
+				entity.setVelocity(adjustVector(direction));
 				world.playEffect(location, Effect.STEP_SOUND, 10);
 				kickedBy.put(entity, player);
-				balls.put(entity, match);
+				kickedBalls.put(entity, getMatch());
+				cleanUpList.put(getMatch(), entity);
+				for (Team t: teamsList) {
+					if (!canKick.contains(t)) {
+						canKick.add(t);
+					}
+				}
 			}
 		}
 	}
@@ -114,30 +149,30 @@ public class FutbolArena extends Arena{
 	@MatchEventHandler(needsPlayer=false)
 	public void onEntityInteract(EntityInteractEvent event){
 		Entity ent = event.getEntity();
-		World world = ent.getWorld();
-		Location loc = event.getEntity().getLocation();
-		// Team goals are set by the blocks below the pressure plates
-		Block block = loc.getBlock().getRelative(BlockFace.DOWN);
-		int blockData = block.getData();
-		if (ent instanceof Item) {
-			Match thisMatch = balls.get(ent);
-			Player kickedByPlayer = kickedBy.get(ent);
+		if (ent instanceof Item && kickedBalls.containsKey(ent)) {
+			World world = ent.getWorld();
+			Location loc = event.getEntity().getLocation();
+			// Team goals are set by the blocks below the pressure plates
+			Block block = loc.getBlock().getRelative(BlockFace.DOWN);
+			int blockData = block.getData();
+			Match thisMatch = kickedBalls.get(ent);
+			ArenaPlayer scoringPlayer = getAP(kickedBy.get(ent));
 			Map<Integer, Location> spawnLocs = thisMatch.getArena().getSpawnLocs();
 			List<Team> teamsList = thisMatch.getArena().getTeams();
 			Team teamOne = teamsList.get(0);
 			Team teamTwo = teamsList.get(1);
-			ArenaPlayer scoringPlayer = BattleArena.toArenaPlayer(kickedByPlayer);
 			// Add kill and send message
 			teamsList.get(blockData).addKill(scoringPlayer);
+			canKick.remove(teamsList.get(blockData));
 			world.createExplosion(loc, -1); // TODO maybe change to a sound and effect. Also add to config.yml
-			thisMatch.sendMessage(ChatColor.GRAY + scoringPlayer.getName() + ChatColor.YELLOW + " has scored a Goal!!! "); 
-			thisMatch.sendMessage(ChatColor.GRAY + teamOne.getName() + ": " + ChatColor.GOLD + teamOne.getNKills() + " " +
-				ChatColor.GRAY + teamTwo.getName() + ": " + ChatColor.GOLD + teamTwo.getNKills());
+			thisMatch.sendMessage(ChatColor.GRAY + scoringPlayer.getName() +
+				ChatColor.YELLOW + " has scored a Goal!!! "); 
+			thisMatch.sendMessage(scoreMessage(teamOne, teamTwo));
 			// Send ball to center
-			Vector stop = new Vector(0, 0, 0);
+			Vector stop = new Vector();
+			Location center = fixCenter(world, spawnLocs.get(2));
 			ent.setVelocity(stop);
-			ent.teleport(spawnLocs.get(2), TeleportCause.PLUGIN);
-			ent.setVelocity(stop);
+			ent.teleport(center, TeleportCause.PLUGIN);
 			// Return players to team spawn
 			Set<Player> setOne = teamOne.getBukkitPlayers();
 			Set<Player> setTwo = teamTwo.getBukkitPlayers();
@@ -146,5 +181,56 @@ public class FutbolArena extends Arena{
 		}
 	}	
 	
+	public ArenaPlayer getAP(Player player) {
+		ArenaPlayer ap = BattleArena.toArenaPlayer(player);
+		return ap;
+		
+	}
 	
+	public Location fixCenter(World world, Location origin) {
+		Location center = new Location(world,
+				origin.getX(),
+				origin.getY() + 1.0,
+				origin.getZ());
+		return center;		
+	}
+	
+	public Vector adjustVector(Vector vector) {
+		double y = plugin.getConfig().getDouble("y");
+		double maxY = plugin.getConfig().getDouble("max-y");
+		double Y = vector.getY();
+		if ((Y + y) <= maxY) {
+			Vector adjustedVector = vector.setY(Y + y);
+			return adjustedVector;
+		}else {
+			Vector adjustedVector = vector.setY(maxY);
+			return adjustedVector;
+		}
+	}
+	
+	public String scoreMessage(Team teamOne, Team teamTwo) {
+		String scoreMessage = (ChatColor.GRAY + teamOne.getName() + ": " +
+			ChatColor.GOLD + teamOne.getNKills() + " " +
+			ChatColor.GRAY + teamTwo.getName() + ": " +
+			ChatColor.GOLD + teamTwo.getNKills());
+		return scoreMessage;
+	}
+	
+	public void removeBalls(Match match) {
+		Entity ball = cleanUpList.get(match);
+		if (ball != null) {
+			kickedBy.remove(ball);
+			kickedBalls.remove(ball);
+			ball.remove();
+		}
+	}
+	
+	public void removeTeams(Match match) {
+		List<Team> teamsList = match.getArena().getTeams();
+		for (Team t : teamsList) {
+			if (canKick.contains(t)) {
+				canKick.remove(t);
+			}
+		}
+	}
 }
