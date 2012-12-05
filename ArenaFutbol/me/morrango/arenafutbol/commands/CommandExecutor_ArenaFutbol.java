@@ -29,13 +29,13 @@ public class CommandExecutor_ArenaFutbol implements CommandExecutor {
 						int newInt = Integer.parseInt(args[1]);
 						plugin.getConfig().set("ball", newInt);
 						plugin.saveConfig();
-						sender.sendMessage(ChatColor.GREEN + "success " + newInt);
+						sender.sendMessage(ChatColor.GREEN + "Ball set to Item ID " + newInt);
 					}
 					if (args[0].equalsIgnoreCase("balltimer")) {
-						int newInt = Integer.parseInt(args[1]);
+						int newInt = Integer.parseInt(args[1])*20;
 						plugin.getConfig().set("balltimer", newInt);
 						plugin.saveConfig();
-						sender.sendMessage(ChatColor.GREEN + "success " + newInt);
+						sender.sendMessage(ChatColor.GREEN + "Ball posession timer set to " + newInt + " seconds");
 					}
 					if (args[0].equalsIgnoreCase("sety")) {
 						try {
@@ -43,7 +43,7 @@ public class CommandExecutor_ArenaFutbol implements CommandExecutor {
 						if (newDouble > 1.0) {return false;}
 						plugin.getConfig().set("y", newDouble);
 						plugin.saveConfig();
-						sender.sendMessage(ChatColor.GREEN + "success " + newDouble);
+						sender.sendMessage(ChatColor.GREEN + "Y Axis adjustment set to  " + newDouble);
 						}catch(NumberFormatException ex) {
 							return false;
 						}
@@ -55,7 +55,7 @@ public class CommandExecutor_ArenaFutbol implements CommandExecutor {
 							if (newDouble > 1.0) {return false;}
 							plugin.getConfig().set("maxy", newDouble);
 							plugin.saveConfig();
-							sender.sendMessage(ChatColor.GREEN + "success " + newDouble);
+							sender.sendMessage(ChatColor.GREEN + "Maximum Y axis set to " + newDouble);
 						}catch(NumberFormatException ex) {
 							return false;
 						}
