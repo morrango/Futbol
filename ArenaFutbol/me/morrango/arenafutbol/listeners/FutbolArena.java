@@ -65,7 +65,10 @@ public class FutbolArena extends Arena{
 	public HashMap<Entity, Player> kickedBy = new HashMap<Entity, Player>();
 	public HashMap<Entity, Match> kickedBalls = new HashMap<Entity, Match>();
 	public HashMap<Match, Entity> cleanUpList = new HashMap<Match, Entity>();
+	private HashMap<Team, Integer> ballTimers = new HashMap<Team, Integer>();
 	public Set<Team> canKick = new HashSet<Team>();
+	public int ballTimer = plugin.getConfig().getInt("balltimer");
+	Integer id;
 	
 	@Override
 	public void onStart(){
@@ -85,6 +88,7 @@ public class FutbolArena extends Arena{
 	public void onVictory(MatchResult result){
 		removeBalls(getMatch());
 		removeTeams(getMatch());
+		cancelTimer();
 	}
 	
 	@Override
@@ -131,19 +135,36 @@ public class FutbolArena extends Arena{
 				for (Team t: teamsList) {
 					if (!canKick.contains(t)) {
 						canKick.add(t);
-					}
+						cancelBallTimer(t);
+						}
 				}
 			}
 		}
 	}
-
+/*	
+*	@MatchEventHandler
+*	public void onPlayerPickupItem(PlayerPickupItemEvent event){
+*		ArenaPlayer player = getAP(event.getPlayer());
+*		ArenaClass playerClass = player.getChosenClass();
+*		if (event.isCancelled()) {
+*			return;
+*		}
+*		if (playerClass != null) {
+*			event.getPlayer().sendMessage(" " + playerClass);
+*			// TODO add drop timer. get inventory and dump on ground
+*			player.getInventory().
+*		}else {
+*			event.setCancelled(true);
+*		}
+*
+*	}
+*/
 	@MatchEventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent event){
 		if (event.isCancelled()) {
 			return;
-		}else {
-			event.setCancelled(true);
 		}
+		event.setCancelled(true);
 	}
 	
 	@MatchEventHandler(needsPlayer=false)
@@ -164,6 +185,8 @@ public class FutbolArena extends Arena{
 			// Add kill and send message
 			teamsList.get(blockData).addKill(scoringPlayer);
 			canKick.remove(teamsList.get(blockData));
+			startBallTimer(teamsList.get(blockData));
+			//canKick.remove(teamsList.get(blockData));
 			world.createExplosion(loc, -1); // TODO maybe change to a sound and effect. Also add to config.yml
 			thisMatch.sendMessage(ChatColor.GRAY + scoringPlayer.getName() +
 				ChatColor.YELLOW + " has scored a Goal!!! "); 
@@ -179,12 +202,28 @@ public class FutbolArena extends Arena{
 			for (Player player : setOne) {player.teleport(match.getArena().getSpawnLoc(0));}
 			for (Player player : setTwo) {player.teleport(match.getArena().getSpawnLoc(1));}
 		}
-	}	
+	}
+
+	private void startBallTimer(final Team team) {
+		cancelBallTimer(team);
+		Integer timerid = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin,
+		new Runnable(){
+				@Override
+				public void run() {
+					canKick.add(team);
+				}
+			}, ballTimer);
+		ballTimers.put(team, timerid);
+	}
+
+	private void cancelBallTimer(Team team){
+		Integer timerid = ballTimers.get(team);
+		if (id != null) {Bukkit.getScheduler().cancelTask(timerid);}
+	}
 	
 	public ArenaPlayer getAP(Player player) {
 		ArenaPlayer ap = BattleArena.toArenaPlayer(player);
 		return ap;
-		
 	}
 	
 	public Location fixCenter(World world, Location origin) {
@@ -233,4 +272,13 @@ public class FutbolArena extends Arena{
 			}
 		}
 	}
+	
+	public void cancelTimer(){
+		if (id != null){
+			Bukkit.getScheduler().cancelTask(id);
+			id = null;
+		}
+	}
+	
+	
 }

@@ -31,6 +31,12 @@ public class CommandExecutor_ArenaFutbol implements CommandExecutor {
 						plugin.saveConfig();
 						sender.sendMessage(ChatColor.GREEN + "success " + newInt);
 					}
+					if (args[0].equalsIgnoreCase("balltimer")) {
+						int newInt = Integer.parseInt(args[1]);
+						plugin.getConfig().set("balltimer", newInt);
+						plugin.saveConfig();
+						sender.sendMessage(ChatColor.GREEN + "success " + newInt);
+					}
 					if (args[0].equalsIgnoreCase("sety")) {
 						try {
 						double newDouble = Double.parseDouble(args[1]);
