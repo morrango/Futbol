@@ -1,4 +1,4 @@
 ball: 378
-balltimer: 200
+balltimer: 10
 max-y: 0.8
 y: 0.25
