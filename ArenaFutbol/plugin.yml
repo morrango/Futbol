@@ -1,6 +1,6 @@
 name: ArenaFutbol
 main: me.morrango.arenafutbol.ArenaFutbol
-version: 0.3
+version: 0.3.1
 website: http://
 author: Morrango
 depend: [BattleArena]
@@ -17,4 +17,4 @@ commands:
     description: arena futbol
     aliases: [af]
     usage: |
-           /af ball <int>, /af sety <double> /af maxy <double>
+           /af ball <int>, /af pitch <int>, /af maxpitch <int>, /af power <double>

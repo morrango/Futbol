@@ -67,15 +67,14 @@ public class FutbolArena extends Arena{
 	public HashMap<Match, Entity> cleanUpList = new HashMap<Match, Entity>();
 	private HashMap<Team, Integer> ballTimers = new HashMap<Team, Integer>();
 	public Set<Team> canKick = new HashSet<Team>();
-	public int ballTimer = plugin.getConfig().getInt("balltimer");
 	Integer id;
 	
 	@Override
 	public void onStart(){
 		Location loc = getSpawnLoc(2);
 		World world = loc.getWorld();
-		int ball = plugin.getConfig().getInt("ball");
-		ItemStack is = new ItemStack(ball);
+		int ballID = plugin.getConfig().getInt("ball");
+		ItemStack is = new ItemStack(ballID);
 		Location center = fixCenter(world, loc);
 		world.dropItem(center, is);
 		List<Team> teamsList = match.getArena().getTeams();
@@ -118,7 +117,7 @@ public class FutbolArena extends Arena{
 	@MatchEventHandler
 	public void onPlayerAnimation(PlayerAnimationEvent event){
 		Player player = event.getPlayer();
-		ArenaPlayer arenaPlayer = getAP(event.getPlayer());
+		ArenaPlayer arenaPlayer = getAP(player);
 		Team kickersTeam = getTeam(arenaPlayer);
 		List<Entity> ent = player.getNearbyEntities(1,1,1);
 		for (Entity entity : ent) {
@@ -126,8 +125,7 @@ public class FutbolArena extends Arena{
 				List<Team> teamsList = match.getArena().getTeams();
 				Location location = player.getLocation();
 				World world = player.getWorld();
-				Vector direction = player.getEyeLocation().getDirection();
-				entity.setVelocity(adjustVector(direction));
+				entity.setVelocity(kickVector(player));
 				world.playEffect(location, Effect.STEP_SOUND, 10);
 				kickedBy.put(entity, player);
 				kickedBalls.put(entity, getMatch());
@@ -141,24 +139,7 @@ public class FutbolArena extends Arena{
 			}
 		}
 	}
-/*	
-*	@MatchEventHandler
-*	public void onPlayerPickupItem(PlayerPickupItemEvent event){
-*		ArenaPlayer player = getAP(event.getPlayer());
-*		ArenaClass playerClass = player.getChosenClass();
-*		if (event.isCancelled()) {
-*			return;
-*		}
-*		if (playerClass != null) {
-*			event.getPlayer().sendMessage(" " + playerClass);
-*			// TODO add drop timer. get inventory and dump on ground
-*			player.getInventory().
-*		}else {
-*			event.setCancelled(true);
-*		}
-*
-*	}
-*/
+
 	@MatchEventHandler
 	public void onPlayerPickupItem(PlayerPickupItemEvent event){
 		if (event.isCancelled()) {
@@ -186,7 +167,6 @@ public class FutbolArena extends Arena{
 			teamsList.get(blockData).addKill(scoringPlayer);
 			canKick.remove(teamsList.get(blockData));
 			startBallTimer(teamsList.get(blockData));
-			//canKick.remove(teamsList.get(blockData));
 			world.createExplosion(loc, -1); // TODO maybe change to a sound and effect. Also add to config.yml
 			thisMatch.sendMessage(ChatColor.GRAY + scoringPlayer.getName() +
 				ChatColor.YELLOW + " has scored a Goal!!! "); 
@@ -206,6 +186,7 @@ public class FutbolArena extends Arena{
 
 	private void startBallTimer(final Team team) {
 		cancelBallTimer(team);
+		int ballTimer = plugin.getConfig().getInt("balltimer");
 		Integer timerid = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin,
 		new Runnable(){
 				@Override
@@ -234,17 +215,20 @@ public class FutbolArena extends Arena{
 		return center;		
 	}
 	
-	public Vector adjustVector(Vector vector) {
-		double y = plugin.getConfig().getDouble("y");
-		double maxY = plugin.getConfig().getDouble("max-y");
-		double Y = vector.getY();
-		if ((Y + y) <= maxY) {
-			Vector adjustedVector = vector.setY(Y + y);
-			return adjustedVector;
-		}else {
-			Vector adjustedVector = vector.setY(maxY);
-			return adjustedVector;
-		}
+	public Vector kickVector(Player player) {
+		float configAdjPitch = -(float)plugin.getConfig().getInt("pitch");
+		float configMaxPitch = -(float)plugin.getConfig().getInt("maxpitch");
+		double configPower = plugin.getConfig().getDouble("power");
+		Location loc = player.getEyeLocation();
+		float pitch = loc.getPitch();
+		pitch = pitch + configAdjPitch;
+		//Bukkit.broadcastMessage("adj" + configAdjPitch + "max " + configMaxPitch);
+		if (pitch > 0) {pitch = 0.0f;}
+		if (pitch < configMaxPitch) {pitch = 0.0f + configMaxPitch;}
+		loc.setPitch(pitch);
+		Vector vector = loc.getDirection();
+		vector = vector.multiply(configPower);
+		return vector;
 	}
 	
 	public String scoreMessage(Team teamOne, Team teamTwo) {

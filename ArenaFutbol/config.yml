@@ -1,4 +1,5 @@
 ball: 378
 balltimer: 10
-max-y: 0.8
-y: 0.25
+pitch: 25
+maxpitch: 90
+power: 1.2

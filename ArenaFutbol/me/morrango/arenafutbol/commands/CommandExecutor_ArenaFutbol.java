@@ -30,6 +30,7 @@ public class CommandExecutor_ArenaFutbol implements CommandExecutor {
 						plugin.getConfig().set("ball", newInt);
 						plugin.saveConfig();
 						sender.sendMessage(ChatColor.GREEN + "Ball set to Item ID " + newInt);
+						return true;
 					}
 					if (args[0].equalsIgnoreCase("balltimer")) {
 						int prsInt = Integer.parseInt(args[1]);
@@ -37,31 +38,37 @@ public class CommandExecutor_ArenaFutbol implements CommandExecutor {
 						plugin.getConfig().set("balltimer", newInt);
 						plugin.saveConfig();
 						sender.sendMessage(ChatColor.GREEN + "Ball posession timer set to " + prsInt + " Seconds");
+						return true;
 					}
-					if (args[0].equalsIgnoreCase("sety")) {
+					if (args[0].equalsIgnoreCase("pitch")) {
+						int prsInt = Integer.parseInt(args[1]);
+						if (prsInt > 90 ||prsInt < 0) {return false;}
+						plugin.getConfig().set("pitch", prsInt);
+						plugin.saveConfig();
+						sender.sendMessage(ChatColor.GREEN + "Pitch adjustment set to " + prsInt + " degrees");
+						return true;
+					}
+					if (args[0].equalsIgnoreCase("maxPitch")) {
+						int prsInt = Integer.parseInt(args[1]);
+						if (prsInt > 90 ||prsInt < 0) {return false;}
+						plugin.getConfig().set("maxpitch", prsInt);
+						plugin.saveConfig();
+						sender.sendMessage(ChatColor.GREEN + "Maximum Pitch set to " + prsInt + " degrees");
+						return true;
+					}
+					if (args[0].equalsIgnoreCase("power")) {
 						try {
 						double newDouble = Double.parseDouble(args[1]);
-						if (newDouble > 1.0) {return false;}
-						plugin.getConfig().set("y", newDouble);
+						if (newDouble > 2.0) {return false;}
+						plugin.getConfig().set("power", newDouble);
 						plugin.saveConfig();
-						sender.sendMessage(ChatColor.GREEN + "Y Axis adjustment set to  " + newDouble);
+						sender.sendMessage(ChatColor.GREEN + "Power adjustment set to " + (int)(newDouble*100) + "%");
 						}catch(NumberFormatException ex) {
 							return false;
 						}
+						return true;
 					}
-					
-					if (args[0].equalsIgnoreCase("maxy")) {
-						try {
-							double newDouble = Double.parseDouble(args[1]);
-							if (newDouble > 1.0) {return false;}
-							plugin.getConfig().set("maxy", newDouble);
-							plugin.saveConfig();
-							sender.sendMessage(ChatColor.GREEN + "Maximum Y axis set to " + newDouble);
-						}catch(NumberFormatException ex) {
-							return false;
-						}
-					}
-					return true;
+					return false;
 				}
 			}
 	}
