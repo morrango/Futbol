@@ -37,14 +37,14 @@ public class ArenaFutbol extends JavaPlugin{
 	private Logger log;
 	private PluginDescriptionFile description;
 	private String prefix;
-	
+
 	@Override
 	public void onEnable(){
 		log = Logger.getLogger("Minecraft");
 		description = getDescription();
 		prefix = "["+description.getName()+"] ";
 		log("loading "+description.getFullName());
-		saveDefaultConfig();
+		this.loadConfig();
 		BattleArena.registerMatchType(this, "Futbol", "fb", FutbolArena.class);
 		getCommand("arenafutbol").setExecutor(new CommandExecutor_ArenaFutbol(this));
 	}
@@ -58,4 +58,9 @@ public class ArenaFutbol extends JavaPlugin{
 		log.info(prefix+message);
 	}
 
+	public void loadConfig(){
+		this.getConfig().options().copyDefaults(true);
+		saveDefaultConfig();
+		saveConfig();
+	}
 }
