@@ -1,6 +1,6 @@
 name: ArenaFutbol
 main: me.morrango.arenafutbol.ArenaFutbol
-version: 0.3.1
+version: 0.3.2
 website: http://
 author: Morrango
 depend: [BattleArena]

@@ -17,8 +17,9 @@
  *    You should have received a copy of the GNU General Public License
  *    along with ArenaFutbol.  If not, see <http://www.gnu.org/licenses/>.
  *    
- *	  powered by KickStarter
- *
+ *	  powered by: 
+ *    KickStarter
+ *    BattleArena
  */
 
 package me.morrango.arenafutbol;
@@ -38,6 +39,7 @@ public class ArenaFutbol extends JavaPlugin{
 	private PluginDescriptionFile description;
 	private String prefix;
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onEnable(){
 		log = Logger.getLogger("Minecraft");
@@ -46,6 +48,7 @@ public class ArenaFutbol extends JavaPlugin{
 		log("loading "+description.getFullName());
 		this.loadConfig();
 		BattleArena.registerMatchType(this, "Futbol", "fb", FutbolArena.class);
+		BattleArena.registerCompetition(this, "Futbol", "fb", FutbolArena.class);
 		getCommand("arenafutbol").setExecutor(new CommandExecutor_ArenaFutbol(this));
 	}
 	
