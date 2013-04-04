@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/Morrango/Downloads/Bukkit.Jar/craftbukkit-1.5.1-R0.1-20130325.062812-18.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Morrango/Downloads/Bukkit.Jar/BattleArena.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Morrango/Downloads/New folder/plugins/update/BattleArena.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Morrango/Downloads/New folder/plugins/update/craftbukkit-1.5.1-R0.2-20130404.062514-2.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
