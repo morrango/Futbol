@@ -29,7 +29,6 @@ package me.morrango.arenafutbol.listeners;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import mc.alk.arena.BattleArena;
@@ -40,7 +39,7 @@ import mc.alk.arena.objects.MatchResult;
 import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.MatchEventHandler;
-import mc.alk.arena.objects.teams.Team;
+import mc.alk.arena.objects.teams.ArenaTeam;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -67,8 +66,8 @@ public class FutbolArena extends Arena{
 	public HashMap<Entity, Player> kickedBy = new HashMap<Entity, Player>();
 	public HashMap<Entity, Match> kickedBalls = new HashMap<Entity, Match>();
 	public HashMap<Match, Entity> cleanUpList = new HashMap<Match, Entity>();
-	private HashMap<Team, Integer> ballTimers = new HashMap<Team, Integer>();
-	public Set<Team> canKick = new HashSet<Team>();
+	private HashMap<ArenaTeam, Integer> ballTimers = new HashMap<ArenaTeam, Integer>();
+	public Set<ArenaTeam> canKick = new HashSet<ArenaTeam>();
 	Integer id;
 	
 	@Override
@@ -79,8 +78,8 @@ public class FutbolArena extends Arena{
 		ItemStack is = new ItemStack(ballID);
 		Location center = fixCenter(world, loc);
 		world.dropItem(center, is);
-		List<Team> teamsList = match.getArena().getTeams();
-		for (Team t: teamsList) {
+		List<ArenaTeam> teamsList = match.getArena().getTeams();
+		for (ArenaTeam t: teamsList) {
 			canKick.add(t);
 		}
 	}
@@ -88,22 +87,22 @@ public class FutbolArena extends Arena{
 	@Override
 	public void onVictory(MatchResult result){
 		removeBalls(getMatch());
-		removeTeams(getMatch());
+		removeArenaTeams(getMatch());
 		cancelTimer();
 	}
 	
 	@Override
 	public void onCancel(){
 		removeBalls(getMatch());
-		removeTeams(getMatch());
+		removeArenaTeams(getMatch());
 	}
 	
 	@MatchEventHandler
 	public void matchMessages(MatchMessageEvent event){
 		MatchState state = event.getState();
-		List<Team> teamsList = match.getArena().getTeams();
-		Team teamOne = teamsList.get(0);
-		Team teamTwo = teamsList.get(1);
+		List<ArenaTeam> teamsList = match.getArena().getTeams();
+		ArenaTeam teamOne = teamsList.get(0);
+		ArenaTeam teamTwo = teamsList.get(1);
 		if (state.equals(MatchState.ONMATCHINTERVAL)) {
 			event.setMatchMessage("");
 			match.sendMessage(ChatColor.YELLOW + "The current score is " +
@@ -120,11 +119,11 @@ public class FutbolArena extends Arena{
 	public void onPlayerAnimation(PlayerAnimationEvent event){
 		Player player = event.getPlayer();
 		ArenaPlayer arenaPlayer = getAP(player);
-		Team kickersTeam = getTeam(arenaPlayer);
+		ArenaTeam kickersArenaTeam = getTeam(arenaPlayer);
 		List<Entity> ent = player.getNearbyEntities(1,1,1);
 		for (Entity entity : ent) {
-			if(entity instanceof Item && canKick.contains(kickersTeam)) {
-				List<Team> teamsList = match.getArena().getTeams();
+			if(entity instanceof Item && canKick.contains(kickersArenaTeam)) {
+				List<ArenaTeam> teamsList = match.getArena().getTeams();
 				Location location = player.getLocation();
 				World world = player.getWorld();
 				entity.setVelocity(kickVector(player));
@@ -132,7 +131,7 @@ public class FutbolArena extends Arena{
 				kickedBy.put(entity, player);
 				kickedBalls.put(entity, getMatch());
 				cleanUpList.put(getMatch(), entity);
-				for (Team t: teamsList) {
+				for (ArenaTeam t: teamsList) {
 					if (!canKick.contains(t)) {
 						canKick.add(t);
 						cancelBallTimer(t);
@@ -156,15 +155,15 @@ public class FutbolArena extends Arena{
 		if (ent instanceof Item && kickedBalls.containsKey(ent)) {
 			World world = ent.getWorld();
 			Location loc = event.getEntity().getLocation();
-			// Team goals are set by the blocks below the pressure plates
+			// ArenaTeam goals are set by the blocks below the pressure plates
 			Block block = loc.getBlock().getRelative(BlockFace.DOWN);
 			int blockData = block.getData();
 			Match thisMatch = kickedBalls.get(ent);
 			ArenaPlayer scoringPlayer = getAP(kickedBy.get(ent));
-			Map<Integer, Location> spawnLocs = thisMatch.getArena().getSpawnLocs();
-			List<Team> teamsList = thisMatch.getArena().getTeams();
-			Team teamOne = teamsList.get(0);
-			Team teamTwo = teamsList.get(1);
+			//Map<Integer, Location> spawnLocs = thisMatch.getArena().getSpawnLocs();
+			List<ArenaTeam> teamsList = thisMatch.getArena().getTeams();
+			ArenaTeam teamOne = teamsList.get(0);
+			ArenaTeam teamTwo = teamsList.get(1);
 			// Add kill and send message
 			teamsList.get(blockData).addKill(scoringPlayer);
 			canKick.remove(teamsList.get(blockData));
@@ -175,18 +174,20 @@ public class FutbolArena extends Arena{
 			thisMatch.sendMessage(scoreMessage(teamOne, teamTwo));
 			// Send ball to center
 			Vector stop = new Vector();
-			Location center = fixCenter(world, spawnLocs.get(2));
+			Location center = fixCenter(world, match.getArena().getSpawnLoc(2));
 			ent.setVelocity(stop);
 			ent.teleport(center, TeleportCause.PLUGIN);
 			// Return players to team spawn
+			
 			Set<Player> setOne = teamOne.getBukkitPlayers();
 			Set<Player> setTwo = teamTwo.getBukkitPlayers();
-			for (Player player : setOne) {player.teleport(match.getArena().getSpawnLoc(0));}
-			for (Player player : setTwo) {player.teleport(match.getArena().getSpawnLoc(1));}
+			tpArenaTeams(setOne, setTwo, thisMatch);
+			//for (Player player : setOne) {player.teleport(match.getArena().getSpawnLoc(0));}
+			//for (Player player : setTwo) {player.teleport(match.getArena().getSpawnLoc(1));}
 		}
 	}
 
-	private void startBallTimer(final Team team) {
+	private void startBallTimer(final ArenaTeam team) {
 		cancelBallTimer(team);
 		int ballTimer = plugin.getConfig().getInt("balltimer");
 		Integer timerid = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin,
@@ -195,11 +196,21 @@ public class FutbolArena extends Arena{
 				public void run() {
 					canKick.add(team);
 				}
-			}, ballTimer);
+			}, ballTimer + 3);
 		ballTimers.put(team, timerid);
 	}
+	
+	public void tpArenaTeams(final Set<Player> setOne,final Set<Player> setTwo, final Match match) {
+		Bukkit.getScheduler().runTaskLater(plugin,new Runnable(){
+			@Override
+			public void run() {
+				for (Player player : setOne) {player.teleport(match.getArena().getSpawnLoc(0));}
+				for (Player player : setTwo) {player.teleport(match.getArena().getSpawnLoc(1));}
+			}
+		}, 60);
+	}
 
-	private void cancelBallTimer(Team team){
+	private void cancelBallTimer(ArenaTeam team){
 		Integer timerid = ballTimers.get(team);
 		if (id != null) {Bukkit.getScheduler().cancelTask(timerid);}
 	}
@@ -233,7 +244,7 @@ public class FutbolArena extends Arena{
 		return vector;
 	}
 	
-	public String scoreMessage(Team teamOne, Team teamTwo) {
+	public String scoreMessage(ArenaTeam teamOne, ArenaTeam teamTwo) {
 		String scoreMessage = (ChatColor.GRAY + teamOne.getName() + ": " +
 			ChatColor.GOLD + teamOne.getNKills() + " " +
 			ChatColor.GRAY + teamTwo.getName() + ": " +
@@ -250,9 +261,9 @@ public class FutbolArena extends Arena{
 		}
 	}
 	
-	public void removeTeams(Match match) {
-		List<Team> teamsList = match.getArena().getTeams();
-		for (Team t : teamsList) {
+	public void removeArenaTeams(Match match) {
+		List<ArenaTeam> teamsList = match.getArena().getTeams();
+		for (ArenaTeam t : teamsList) {
 			if (canKick.contains(t)) {
 				canKick.remove(t);
 			}
