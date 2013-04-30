@@ -33,12 +33,13 @@ import java.util.Set;
 
 import mc.alk.arena.BattleArena;
 import mc.alk.arena.competition.match.Match;
-import mc.alk.arena.events.matches.MatchMessageEvent;
 import mc.alk.arena.objects.ArenaPlayer;
 import mc.alk.arena.objects.MatchResult;
-import mc.alk.arena.objects.MatchState;
 import mc.alk.arena.objects.arenas.Arena;
 import mc.alk.arena.objects.events.MatchEventHandler;
+import mc.alk.arena.objects.scoreboard.ArenaDisplaySlot;
+import mc.alk.arena.objects.scoreboard.ArenaObjective;
+import mc.alk.arena.objects.scoreboard.ArenaScoreboard;
 import mc.alk.arena.objects.teams.ArenaTeam;
 
 import org.bukkit.Bukkit;
@@ -69,16 +70,30 @@ public class FutbolArena extends Arena{
 	private HashMap<ArenaTeam, Integer> ballTimers = new HashMap<ArenaTeam, Integer>();
 	public Set<ArenaTeam> canKick = new HashSet<ArenaTeam>();
 	Integer id;
+	ArenaObjective scores;
+
+	@Override
+	public void onOpen(){
+        scores = new ArenaObjective("goal", "totalKillCount");
+        scores.setDisplayName(ChatColor.GOLD + "Goals");
+        ArenaScoreboard scoreboard = match.getScoreboard();
+        scores.setDisplaySlot(ArenaDisplaySlot.SIDEBAR);
+        scores.setDisplayPlayers(false);
+        scoreboard.setPoints(scores, match.getTeams().get(0), 0);
+        scoreboard.setPoints(scores, match.getTeams().get(1), 0);
+        scoreboard.addObjective(scores);
+	}
 	
 	@Override
 	public void onStart(){
+		List<ArenaTeam> teamsList = match.getArena().getTeams();
 		Location loc = getSpawnLoc(2);
 		World world = loc.getWorld();
 		int ballID = plugin.getConfig().getInt("ball");
 		ItemStack is = new ItemStack(ballID);
 		Location center = fixCenter(world, loc);
 		world.dropItem(center, is);
-		List<ArenaTeam> teamsList = match.getArena().getTeams();
+		
 		for (ArenaTeam t: teamsList) {
 			canKick.add(t);
 		}
@@ -96,7 +111,7 @@ public class FutbolArena extends Arena{
 		removeBalls(getMatch());
 		removeArenaTeams(getMatch());
 	}
-	
+/*	
 	@MatchEventHandler
 	public void matchMessages(MatchMessageEvent event){
 		MatchState state = event.getState();
@@ -104,16 +119,16 @@ public class FutbolArena extends Arena{
 		ArenaTeam teamOne = teamsList.get(0);
 		ArenaTeam teamTwo = teamsList.get(1);
 		if (state.equals(MatchState.ONMATCHINTERVAL)) {
-			event.setMatchMessage("");
+			//event.setMatchMessage("");
 			match.sendMessage(ChatColor.YELLOW + "The current score is " +
 					scoreMessage(teamOne, teamTwo));
 		}
 		if (state.equals(MatchState.ONMATCHTIMEEXPIRED)) {
-			event.setMatchMessage("");
+			//event.setMatchMessage("");
 			match.sendMessage(ChatColor.YELLOW + "The Final score is " +
 					scoreMessage(teamOne, teamTwo));	
 		}
-	}
+	}*/
 	
 	@MatchEventHandler
 	public void onPlayerAnimation(PlayerAnimationEvent event){
@@ -135,7 +150,7 @@ public class FutbolArena extends Arena{
 					if (!canKick.contains(t)) {
 						canKick.add(t);
 						cancelBallTimer(t);
-						}
+					}
 				}
 			}
 		}
@@ -164,14 +179,17 @@ public class FutbolArena extends Arena{
 			List<ArenaTeam> teamsList = thisMatch.getArena().getTeams();
 			ArenaTeam teamOne = teamsList.get(0);
 			ArenaTeam teamTwo = teamsList.get(1);
+			ArenaTeam scoringTeam = teamsList.get(blockData);
 			// Add kill and send message
+			
 			teamsList.get(blockData).addKill(scoringPlayer);
+			match.getScoreboard().setPoints(scores, scoringTeam, scoringTeam.getNKills());
 			canKick.remove(teamsList.get(blockData));
 			startBallTimer(teamsList.get(blockData));
 			world.createExplosion(loc, -1); // TODO maybe change to a sound and effect. Also add to config.yml
-			thisMatch.sendMessage(ChatColor.GRAY + scoringPlayer.getName() +
-				ChatColor.YELLOW + " has scored a Goal!!! "); 
-			thisMatch.sendMessage(scoreMessage(teamOne, teamTwo));
+			//thisMatch.sendMessage(scoreMessage(teamOne, teamTwo));
+			//thisMatch.sendMessage(ChatColor.GRAY + scoringPlayer.getName() +
+									//ChatColor.YELLOW + " has scored a Goal!!! "); 
 			// Send ball to center
 			Vector stop = new Vector();
 			Location center = fixCenter(world, match.getArena().getSpawnLoc(2));
@@ -186,7 +204,7 @@ public class FutbolArena extends Arena{
 			//for (Player player : setTwo) {player.teleport(match.getArena().getSpawnLoc(1));}
 		}
 	}
-
+	
 	private void startBallTimer(final ArenaTeam team) {
 		cancelBallTimer(team);
 		int ballTimer = plugin.getConfig().getInt("balltimer");
@@ -244,13 +262,13 @@ public class FutbolArena extends Arena{
 		return vector;
 	}
 	
-	public String scoreMessage(ArenaTeam teamOne, ArenaTeam teamTwo) {
-		String scoreMessage = (ChatColor.GRAY + teamOne.getName() + ": " +
+	/*public String scoreMessage(ArenaTeam teamOne, ArenaTeam teamTwo) {
+		String scoreMessage = (ChatColor.GRAY + teamOne.getScoreboardDisplayName() + ": " +
 			ChatColor.GOLD + teamOne.getNKills() + " " +
-			ChatColor.GRAY + teamTwo.getName() + ": " +
+			ChatColor.GRAY + teamTwo.getScoreboardDisplayName() + ": " +
 			ChatColor.GOLD + teamTwo.getNKills());
 		return scoreMessage;
-	}
+	}*/
 	
 	public void removeBalls(Match match) {
 		Entity ball = cleanUpList.get(match);
