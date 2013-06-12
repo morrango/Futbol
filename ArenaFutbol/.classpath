@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path=""/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/Users/Morrango/Downloads/Bukkit.Jar/BattleArena.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Morrango/Downloads/Bukkit.Jar/craftbukkit-1.5.2-R0.2-20130520.060219-6.jar"/>
+	<classpathentry kind="output" path=""/>
+</classpath>
