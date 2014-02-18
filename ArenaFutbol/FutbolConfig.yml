@@ -11,14 +11,14 @@ Futbol:
     prefix: "&f[Futbol]&e"
     cmd: fb
     nTeams: 2
-    matchTime: 120 ## How long do timed matches last, (in seconds)
+    matchTime: 300 ## How long do timed matches last, (in seconds)
     matchUpdateInterval: 30 ## For timed matched, how long between sending players match updates
     ### You can delete any stages/transitions that have no options
     ### for a list of options see wiki
     preReqs: ## Prerequisites for joining
         options: []
     onJoin:
-        options: [alwaysJoin]
+        options: [alwaysJoin, alwaysTeamNames, alwaysWoolTeams, armorTeams]
     onEnter:  ## when they join the match
         options: [storeAll]
     onLeave:  ## when they leave the match
@@ -35,7 +35,7 @@ Futbol:
         options: []
     onComplete: ## what happens when things end
         options: [teleportOut, pvpOn, blockBreakOn]
-    victoryCondition: highestKills
+    victoryCondition: Custom
     winner: ## what to give the winner
         options: [money=10, experience=30, health=20, hunger=20, giveItems]
         items:

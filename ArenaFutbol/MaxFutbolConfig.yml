@@ -5,19 +5,20 @@
 
 MaxFutbol:
     enabled: true
+    joinType: JoinPhase
     database: Futbol # or delete if you dont want wins/losses/top, needs BattleTracker
     rated: false # if database is enabled
     prefix: "&f[Futbol]&e"
     cmd: fb
     nTeams: 2
-    matchTime: 120 ## How long do timed matches last, (in seconds)
+    matchTime: 300 ## How long do timed matches last, (in seconds)
     matchUpdateInterval: 30 ## For timed matched, how long between sending players match updates
     ### You can delete any stages/transitions that have no options
     ### for a list of options see wiki
     preReqs: ## Prerequisites for joining
         options: []
     onJoin:
-        options: [alwaysJoin, alwaysTeamNames, alwaysWoolTeams, armorTeams]
+        options: [alwaysJoin]
     onEnter:  ## when they join the match
         options: [storeAll]
     onLeave:  ## when they leave the match
@@ -44,4 +45,3 @@ MaxFutbol:
         options: [health=20, hunger=20, giveItems]
         items:
           - emerald: 1
-            

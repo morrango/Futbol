@@ -24,43 +24,47 @@
 
 package me.morrango.arenafutbol;
 
-
 import java.util.logging.Logger;
 
 import mc.alk.arena.BattleArena;
 import me.morrango.arenafutbol.commands.CommandExecutor_ArenaFutbol;
 import me.morrango.arenafutbol.listeners.FutbolArena;
+
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-
-public class ArenaFutbol extends JavaPlugin{
+public class ArenaFutbol extends JavaPlugin {
 	private Logger log;
 	private PluginDescriptionFile description;
 	private String prefix;
+	public static ArenaFutbol plugin;
 
 	@Override
-	public void onEnable(){
+	public void onEnable() {
+		plugin = this;
 		log = Logger.getLogger("Minecraft");
 		description = getDescription();
-		prefix = "["+description.getName()+"] ";
-		log("loading "+description.getFullName());
-		//this.loadConfig();
-		BattleArena.registerCompetition(this, "Futbol", "fb", FutbolArena.class);
-		BattleArena.registerCompetition(this, "MaxFutbol", "mfb", FutbolArena.class);
-		getCommand("arenafutbol").setExecutor(new CommandExecutor_ArenaFutbol(this));
-	}
-	
-	@Override
-	public void onDisable(){
-		log("disabled "+description.getFullName());
-	}
-	
-	public void log(String message){
-		log.info(prefix+message);
+		prefix = "[" + description.getName() + "] ";
+		log("loading " + description.getFullName());
+		// this.loadConfig();
+		BattleArena.registerCompetition(this, "Futbol", "fb",
+				FutbolArena.class, new CommandExecutor_ArenaFutbol());
+		BattleArena.registerCompetition(this, "MaxFutbol", "mfb",
+				FutbolArena.class, new CommandExecutor_ArenaFutbol());
+		// getCommand("arenafutbol").setExecutor(new
+		// CommandExecutor_ArenaFutbol(this));
 	}
 
-	public void loadConfig(){
+	@Override
+	public void onDisable() {
+		log("disabled " + description.getFullName());
+	}
+
+	public void log(String message) {
+		log.info(prefix + message);
+	}
+
+	public void loadConfig() {
 		this.getConfig().options().copyDefaults(true);
 		saveDefaultConfig();
 		saveConfig();
