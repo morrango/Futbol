@@ -1,5 +1,7 @@
-ball: 378
-balltimer: 100
+ball:
+  ==: org.bukkit.inventory.ItemStack
+  type: MAGMA_CREAM
+balltimer: 5
 pitch: 15
 maxpitch: 90
 power: 1.1

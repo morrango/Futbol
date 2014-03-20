@@ -46,13 +46,11 @@ public class ArenaFutbol extends JavaPlugin {
 		description = getDescription();
 		prefix = "[" + description.getName() + "] ";
 		log("loading " + description.getFullName());
-		// this.loadConfig();
+		this.loadConfig();
 		BattleArena.registerCompetition(this, "Futbol", "fb",
 				FutbolArena.class, new CommandExecutor_ArenaFutbol());
 		BattleArena.registerCompetition(this, "MaxFutbol", "mfb",
 				FutbolArena.class, new CommandExecutor_ArenaFutbol());
-		// getCommand("arenafutbol").setExecutor(new
-		// CommandExecutor_ArenaFutbol(this));
 	}
 
 	@Override

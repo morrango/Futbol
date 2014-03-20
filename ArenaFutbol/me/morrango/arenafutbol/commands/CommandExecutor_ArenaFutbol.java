@@ -31,21 +31,25 @@ import me.morrango.arenafutbol.ArenaFutbol;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 public class CommandExecutor_ArenaFutbol extends CustomCommandExecutor {
 
 
-	@MCCommand(cmds = { "ball" }, inGame = true, admin = true)
-	public boolean ball(CommandSender sender, int itemId) {
-		ArenaFutbol.plugin.getConfig().set("ball", itemId);
+	@MCCommand(cmds = { "ball" }, op = true, admin = true)
+	public boolean ball(CommandSender sender) {
+		Player player = (Player)sender;
+		ItemStack itemInHand = player.getItemInHand();
+		ArenaFutbol.plugin.getConfig().set("ball", itemInHand);
 		ArenaFutbol.plugin.saveConfig();
-		sender.sendMessage(ChatColor.GREEN + "Ball set to Item ID " + itemId);
+		sender.sendMessage(ChatColor.GREEN + "Ball set to Item ID " + itemInHand);
 		return true;
 	}
 
-	@MCCommand(cmds = { "balltimer" }, inGame = true, admin = true)
+	@MCCommand(cmds = { "balltimer" }, op = true, admin = true)
 	public boolean balltimer(CommandSender sender, int timer) {
-		int newInt = timer * 20;
+		int newInt = timer;
 		ArenaFutbol.plugin.getConfig().set("balltimer", newInt);
 		ArenaFutbol.plugin.saveConfig();
 		sender.sendMessage(ChatColor.GREEN + "Ball posession timer set to "
@@ -53,7 +57,7 @@ public class CommandExecutor_ArenaFutbol extends CustomCommandExecutor {
 		return true;
 	}
 
-	@MCCommand(cmds = { "pitch" }, inGame = true, admin = true)
+	@MCCommand(cmds = { "pitch" }, op = true, admin = true)
 	public boolean pitch(CommandSender sender, int pitch) {
 		if (pitch > 90 || pitch < 0) {
 			return false;
@@ -65,7 +69,7 @@ public class CommandExecutor_ArenaFutbol extends CustomCommandExecutor {
 		return true;
 	}
 
-	@MCCommand(cmds = { "maxpitch" }, inGame = true, admin = true)
+	@MCCommand(cmds = { "maxpitch" }, op = true, admin = true)
 	public boolean maxpitch(CommandSender sender, int pitch) {
 		if (pitch > 90 || pitch < 0) {
 			return false;
@@ -77,7 +81,7 @@ public class CommandExecutor_ArenaFutbol extends CustomCommandExecutor {
 		return true;
 	}
 
-	@MCCommand(cmds = { "power" }, inGame = true, admin = true)
+	@MCCommand(cmds = { "power" }, op = true, admin = true)
 	public boolean power(CommandSender sender, double newDouble) {
 		if (newDouble > 2.0) {
 			return false;
