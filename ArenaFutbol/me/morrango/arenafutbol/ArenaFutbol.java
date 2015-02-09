@@ -24,7 +24,6 @@
 
 package me.morrango.arenafutbol;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
@@ -50,8 +49,7 @@ public class ArenaFutbol extends JavaPlugin {
 	public static ArenaFutbol plugin;
 	public static HashSet<Entity> balls = new HashSet<Entity>();
 	public HashMap<UUID, Vector> vectors = new HashMap<UUID, Vector>();
-	public Field[] packet63Fields;
-	private boolean particles = true;
+	private boolean particles = false;
 
 	@Override
 	public void onEnable() {
@@ -61,11 +59,13 @@ public class ArenaFutbol extends JavaPlugin {
 		prefix = "[" + description.getName() + "] ";
 		log("loading " + description.getFullName());
 
-		packet63Fields = new Field[9];
-		 if (this.getConfig().getBoolean("particles")) {
-		 this.particles = true;
-		 }
-		 
+		if (this.getConfig().getBoolean("particles")) {
+			this.particles = true;
+		}
+		else {
+			this.particles = false;
+		}
+
 		this.loadConfig();
 		log(this.getServer().getVersion());
 		BattleArena.registerCompetition(this, "Futbol", "fb",
@@ -73,15 +73,13 @@ public class ArenaFutbol extends JavaPlugin {
 		getServer().getScheduler().scheduleSyncRepeatingTask(this,
 				new Task_PlayEffect(this), 1L, 1L);
 
-//		try {
-//			Metrics metrics = new Metrics(this);
-//			metrics.start();
-//		} catch (IOException e) {
-//			// Failed to submit the stats :-(
-//		}
+		// try {
+		// Metrics metrics = new Metrics(this);
+		// metrics.start();
+		// } catch (IOException e) {
+		// // Failed to submit the stats :-(
+		// }
 
-		
-		
 	}
 
 	@Override
