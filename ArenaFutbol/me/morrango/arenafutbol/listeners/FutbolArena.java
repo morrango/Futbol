@@ -46,8 +46,11 @@ import mc.alk.scoreboardapi.api.SEntry;
 import mc.alk.scoreboardapi.api.SObjective;
 import mc.alk.scoreboardapi.api.SScoreboard;
 import mc.alk.scoreboardapi.scoreboard.SAPIDisplaySlot;
+import me.morrango.arenafutbol.ArenaFutbol;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.Color;
 import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
@@ -66,8 +69,8 @@ import org.bukkit.event.entity.EntityInteractEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.Plugin;
@@ -75,80 +78,85 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 public class FutbolArena extends Arena {
+	private ArenaFutbol plugin;
+
+	public FutbolArena(ArenaFutbol plugin) {
+		this.plugin = plugin;
+	}
+
 	public FutbolArena() {
 	}
 
-	public Plugin plugin = Bukkit.getPluginManager().getPlugin("ArenaFutbol");
-	public HashMap<Entity, Player> kickedBy = new HashMap<Entity, Player>();
+	public Plugin plugin1 = Bukkit.getPluginManager().getPlugin("ArenaFutbol");
+	public ItemStack is = plugin1.getConfig().getItemStack("ball");
+	public HashMap<Entity,Player> kickedBy = new HashMap<Entity, Player>();
 	public HashMap<Entity, Match> kickedBalls = new HashMap<Entity, Match>();
 	public HashMap<Match, Entity> cleanUpList = new HashMap<Match, Entity>();
 	private HashMap<ArenaTeam, Integer> ballTimers = new HashMap<ArenaTeam, Integer>();
 	public Set<ArenaTeam> canKick = new HashSet<ArenaTeam>();
 	private Random random = new Random();
 
-
-	public void createFireWork(Location loc, Color teamColor) {
+	public void createFireWork(Location loc, Color teamColor, int i) {
 		if (loc != null && teamColor != null) {
 			World w = loc.getWorld();
-			Entity firework = w.spawnEntity(
-					new Location(w, loc.getX() + random.nextGaussian() * 3, loc
-							.getY() - 2, loc.getZ() + random.nextGaussian() * 3),
-					EntityType.FIREWORK);
-			Firework fw = (Firework) firework;
-			FireworkMeta meta = fw.getFireworkMeta();
-			Builder builder = FireworkEffect.builder();
+			for (int j = 1; j <= i; j++) {
+				Entity firework = w.spawnEntity(
+						new Location(w, loc.getX() + random.nextGaussian() * 3, loc.getY(), loc.getZ() + random.nextGaussian() * 3),
+						EntityType.FIREWORK);
+				Firework fw = (Firework) firework;
+				FireworkMeta meta = fw.getFireworkMeta();
+				Builder builder = FireworkEffect.builder();
 
-			builder.withColor(teamColor);
+				builder.withColor(teamColor);
 
-			switch (random.nextInt(4)) {
-			case 0:
-				builder.with(FireworkEffect.Type.BALL_LARGE);
-				break;
-			case 1:
-				builder.with(FireworkEffect.Type.BALL_LARGE);
-				break;
-			case 2:
-				builder.with(FireworkEffect.Type.BALL_LARGE);
-				break;
-			case 3:
-				builder.with(FireworkEffect.Type.BALL_LARGE);
-				break;
-			default:
-				builder.with(FireworkEffect.Type.CREEPER);
-				break;
+				switch (random.nextInt(3)) {
+				case 0:
+					builder.with(FireworkEffect.Type.BALL);
+					break;
+				case 1:
+					builder.with(FireworkEffect.Type.BURST);
+					break;
+				case 2:
+					builder.with(FireworkEffect.Type.BALL_LARGE);
+					break;
+				default:
+					builder.with(FireworkEffect.Type.CREEPER);
+					break;
+				}
+				builder.trail(false);
+				meta.addEffect(builder.build());
+				meta.setPower(0);
+				fw.setFireworkMeta(meta);
+//				fw.detonate();
 			}
-			builder.trail(false);
-			meta.addEffect(builder.build());
-			meta.setPower(0);
-			fw.setFireworkMeta(meta);
-
 		}
 	}
 
 	@Override
 	public void onOpen() {
 		Set<ArenaPlayer> set = match.getPlayers();
-		 List<ArenaTeam> teamsList = match.getArena().getTeams();
-		 String teamOne = teamsList.get(0).getDisplayName();
-		 String teamTwo = teamsList.get(1).getDisplayName();
+		List<ArenaTeam> teamsList = match.getArena().getTeams();
+		String teamOne = teamsList.get(0).getDisplayName();
+		String teamTwo = teamsList.get(1).getDisplayName();
 		// Create the scoreboard
 		SScoreboard scoreboard = getMatch().getScoreboard();
 		SObjective objective = scoreboard.registerNewObjective(
-				"futbolObjective", "totalKillCount", "&6Time", SAPIDisplaySlot.SIDEBAR);
-		
+				"futbolObjective", "totalKillCount", "&6Time",
+				SAPIDisplaySlot.SIDEBAR);
+
 		Iterable<SObjective> objectives = scoreboard.getObjectives();
 		for (SObjective sObjective : objectives) {
 			sObjective.setDisplayPlayers(false);
 			sObjective.setDisplayTeams(false);
 		}
 
-		 SEntry team1 = scoreboard.createEntry(teamOne, "&4" + teamOne);
-		 SEntry team2 = scoreboard.createEntry(teamTwo, "&4" + teamTwo);
-//		 Add the entries to the objective
-		 objective.addEntry(team1, 0);
-		 objective.addEntry(team2, 0);
+		SEntry team1 = scoreboard.createEntry(teamOne, "&4" + teamOne);
+		SEntry team2 = scoreboard.createEntry(teamTwo, "&4" + teamTwo);
+		// Add the entries to the objective
+		objective.addEntry(team1, 0);
+		objective.addEntry(team2, 0);
 		for (ArenaPlayer arenaPlayer : set) {
-			scoreboard.setScoreboard((Player) arenaPlayer);
+			scoreboard.setScoreboard(arenaPlayer.getPlayer());
 		}
 	}
 
@@ -158,7 +166,6 @@ public class FutbolArena extends Arena {
 		SpawnLocation loc = getSpawn(2, false);
 		Location location = loc.getLocation();
 		World world = location.getWorld();
-		ItemStack is = plugin.getConfig().getItemStack("ball");
 		Location center = fixCenter(world, location);
 		world.dropItem(center, is);
 		for (ArenaTeam t : teamsList) {
@@ -170,17 +177,6 @@ public class FutbolArena extends Arena {
 	public void onVictory(MatchResult result) {
 		removeBalls(getMatch());
 		removeArenaTeams(getMatch());
-		List<ArenaTeam> teamsList = match.getArena().getTeams();
-		int teamOne = teamsList.get(0).getNKills();
-		int teamTwo = teamsList.get(1).getNKills();
-		if (teamOne == teamTwo) {
-			match.setDraw();
-		}
-		if (teamOne > teamTwo) {
-			match.setWinner(teamsList.get(0));
-		} else {
-			match.setWinner(teamsList.get(1));
-		}
 	}
 
 	@Override
@@ -208,7 +204,9 @@ public class FutbolArena extends Arena {
 				List<ArenaTeam> teamsList = match.getArena().getTeams();
 				Location location = player.getLocation();
 				World world = player.getWorld();
-				entity.setVelocity(kickVector(player));
+				Vector kickVector = kickVector(player);
+				entity.setVelocity(kickVector);
+				ArenaFutbol.balls.add(entity);
 				world.playEffect(location, Effect.STEP_SOUND, 10);
 				kickedBy.put(entity, player);
 				kickedBalls.put(entity, getMatch());
@@ -224,12 +222,21 @@ public class FutbolArena extends Arena {
 	}
 
 	@ArenaEventHandler
-	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+	public void onArenaPlayerPickupItem(PlayerPickupItemEvent event) {
 		if (event.isCancelled()) {
 			return;
 		}
 		event.setCancelled(true);
 	}
+	
+	@ArenaEventHandler
+	public void onPlayerDropItem(PlayerDropItemEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		event.setCancelled(true);
+	}
+	
 
 	@ArenaEventHandler(priority = EventPriority.HIGHEST, needsPlayer = false)
 	public void onGoalScored(EntityInteractEvent event) {
@@ -251,30 +258,40 @@ public class FutbolArena extends Arena {
 			ArenaTeam teamOne = teamsList.get(0);
 			ArenaTeam teamTwo = teamsList.get(1);
 			ArenaTeam scoringTeam = null;
+			if (!(material.equals(Material.STONE) || material.equals(Material.COBBLESTONE))) {
+				plugin.log(ChatColor.RED + "Set blocks for goals.");
+				return;
+			}
 			if (material.equals(Material.STONE)) {
 				scoringTeam = teamsList.get(0);
-				objective.setPoints(teamOne.getDisplayName(), teamOne.getNKills());
-				createFireWork(center, Color.RED);
+				createFireWork(center, Color.RED, teamOne.getNKills());
 			}
 			if (material.equals(Material.COBBLESTONE)) {
 				scoringTeam = teamsList.get(1);
-				createFireWork(center, Color.BLUE);
+				createFireWork(center, Color.BLUE, teamTwo.getNKills());
 			}
 			ArenaPlayer scoringPlayer = getAP(kickedBy.get(ent));
 			// Add kill and send message
 			scoringTeam.addKill(scoringPlayer);
-			objective.setPoints(scoringTeam.getDisplayName(), scoringTeam.getNKills());
+			objective.setPoints(scoringTeam.getDisplayName(),
+					scoringTeam.getNKills());
 			canKick.remove(scoringTeam);
 			startBallTimer(scoringTeam);
 			kickedBy.put(ent, null);
 			// Send ball to center
-			Vector stop = new Vector(0, 0, 0);
-			ent.setVelocity(stop);
-			ent.teleport(center, TeleportCause.PLUGIN);
+			ArenaFutbol.balls.remove(ent);
+			ent.remove();
+			world.dropItem(center, is);
 			// Return players to team spawn
 			Set<Player> setOne = teamOne.getBukkitPlayers();
 			Set<Player> setTwo = teamTwo.getBukkitPlayers();
 			tpArenaTeams(setOne, setTwo, thisMatch);
+			if (material.equals(Material.STONE)) {
+				createFireWork(center, Color.RED, teamOne.getNKills());
+			}
+			if (material.equals(Material.COBBLESTONE)) {
+				createFireWork(center, Color.BLUE, teamTwo.getNKills());
+			}
 		}
 	}
 
@@ -292,8 +309,8 @@ public class FutbolArena extends Arena {
 
 	private void startBallTimer(final ArenaTeam team) {
 		cancelBallTimer(team);
-		int ballTimer = plugin.getConfig().getInt("balltimer");
-		BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin,
+		int ballTimer = plugin1.getConfig().getInt("balltimer");
+		BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin1,
 				new Runnable() {
 					@Override
 					public void run() {
@@ -327,19 +344,39 @@ public class FutbolArena extends Arena {
 
 	public Location fixCenter(World world, Location origin) {
 		Location center = new Location(world, origin.getX(),
-				origin.getY() + 1.0, origin.getZ());
+			origin.getY() + 1.0, origin.getZ());
+			Chunk chunk = center.getChunk();
+		if (!chunk.isLoaded()) {
+			world.loadChunk(chunk);
+		}
 		return center;
 	}
 
 	public Vector kickVector(Player player) {
-		float configAdjPitch = -(float) plugin.getConfig().getInt("pitch");
-		float configMaxPitch = -(float) plugin.getConfig().getInt("maxpitch");
-		double configPower = plugin.getConfig().getDouble("power");
+		float configAdjPitch = -(float) plugin1.getConfig().getInt("pitch");
+		float configMaxPitch = -(float) plugin1.getConfig().getInt("maxpitch");
+		double configPower = plugin1.getConfig().getDouble("power");
 		Location loc = player.getEyeLocation();
+		if (player.getEquipment().getBoots() != null) {
+			ItemStack boots = player.getEquipment().getBoots();
+			if (boots.isSimilar(new ItemStack(Material.DIAMOND_BOOTS))) {
+				configPower = configPower + 0.5;
+			}
+			if (boots.isSimilar(new ItemStack(Material.IRON_BOOTS))) {
+				configPower = configPower + 0.4;
+			}
+			if (boots.isSimilar(new ItemStack(Material.GOLD_BOOTS))) {
+				configPower = configPower + 0.3;
+			}
+			if (boots.isSimilar(new ItemStack(Material.CHAINMAIL_BOOTS))) {
+				configPower = configPower + 0.2;
+			}
+			if (boots.isSimilar(new ItemStack(Material.LEATHER_BOOTS))) {
+				configPower = configPower + 0.1;
+			}
+		}
 		float pitch = loc.getPitch();
 		pitch = pitch + configAdjPitch;
-		// Bukkit.broadcastMessage("adj" + configAdjPitch + "max " +
-		// configMaxPitch);
 		if (pitch > 0) {
 			pitch = 0.0f;
 		}
@@ -355,6 +392,7 @@ public class FutbolArena extends Arena {
 	public void removeBalls(Match match) {
 		Entity ball = cleanUpList.get(match);
 		if (ball != null) {
+			ArenaFutbol.balls.remove(ball);
 			kickedBalls.remove(ball);
 			kickedBy.remove(ball);
 			ball.remove();
